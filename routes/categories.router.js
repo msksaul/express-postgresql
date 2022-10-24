@@ -1,22 +1,30 @@
-const express = require('express');
+const express = require('express')
+const passport = require('passport')
 
-const CategoryService = require('./../services/category.service');
-const validatorHandler = require('./../middlewares/validator.handler');
-const { createCategorySchema, updateCategorySchema, getCategorySchema } = require('./../schemas/category.schema');
+const CategoryService = require('./../services/category.service')
+const validatorHandler = require('./../middlewares/validator.handler')
+const { checkRoles } = require('./../middlewares/auth.handler')
+const { createCategorySchema, updateCategorySchema, getCategorySchema } = require('./../schemas/category.schema')
 
 const router = express.Router();
 const service = new CategoryService();
 
-router.get('/', async (req, res, next) => {
-  try {
-    const categories = await service.find();
-    res.json(categories);
-  } catch (error) {
-    next(error);
+router.get('/',
+  passport.authenticate('jwt', { session: false }),
+  checkRoles('admin', 'customer'),
+  async (req, res, next) => {
+    try {
+      const categories = await service.find();
+      res.json(categories);
+    } catch (error) {
+      next(error);
+    }
   }
-});
+)
 
 router.get('/:id',
+  passport.authenticate('jwt', { session: false }),
+  checkRoles('admin', 'customer'),
   validatorHandler(getCategorySchema, 'params'),
   async (req, res, next) => {
     try {
@@ -27,9 +35,11 @@ router.get('/:id',
       next(error);
     }
   }
-);
+)
 
-router.post('/',
+router.post('/', 
+  passport.authenticate('jwt', { session: false }),
+  checkRoles('admin'),
   validatorHandler(createCategorySchema, 'body'),
   async (req, res, next) => {
     try {
@@ -40,7 +50,7 @@ router.post('/',
       next(error);
     }
   }
-);
+)
 
 router.patch('/:id',
   validatorHandler(getCategorySchema, 'params'),
